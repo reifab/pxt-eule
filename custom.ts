@@ -8,13 +8,17 @@ enum AvailablePinsOfLightSensor {
     P0 = 0,
     //% block="P1"
     P1 = 1,
+    //% block="P2"
+    P2 = 2,
 }
 
 enum AvailablePinsOfServo {
+    //% block="P0"
+    P0 = 0,
+    //% block="P1"
+    P1 = 1,
     //% block="P2"
     P2 = 2,
-    //% block="P3"
-    P3 = 3,
 }
 
 enum ServoPosition {
@@ -40,13 +44,14 @@ namespace eule {
     let angleGreen: number = 45
     let angleBlue: number = 100
     let angleYellow: number = 160
+    let angleBefore: number = -1
 
     /**
      * Macht den Lichtsensor startklar
      * @param pin Pin, wo der Lichtsensor angeschlossen ist.
      */
     //% group="beim Start"
-    //% block="Lichtsensor ist an Port %pin angeschlossen"
+    //% block="Lichtsensor ist an Pin %pin angeschlossen"
     export function initLightSensor(pin?: AvailablePinsOfLightSensor): void {
         switch(pin){
             case AvailablePinsOfLightSensor.P0:{
@@ -57,6 +62,10 @@ namespace eule {
                 selectedPinForLightSensor = AnalogPin.P1
                 break
             }
+            case AvailablePinsOfLightSensor.P2:{
+                selectedPinForLightSensor = AnalogPin.P2
+                break
+            }
         }
     }
 
@@ -64,16 +73,20 @@ namespace eule {
      * Macht den Servo startklar
      * @param pin Pin, wo der Servo angeschlossen ist.
      */
-    //% block="Servo ist an Port %pin angeschlossen"
+    //% block="Servo ist an Pin %pin angeschlossen"
     //% group="beim Start"
     export function initServo(pin?: AvailablePinsOfServo): void {
         switch(pin){
-            case AvailablePinsOfServo.P2:{
-                selectedPinForServo = AnalogPin.P2
+            case AvailablePinsOfServo.P0:{
+                selectedPinForServo = AnalogPin.P0
                 break
             }
-            case AvailablePinsOfServo.P3:{
-                selectedPinForServo = AnalogPin.P3
+            case AvailablePinsOfServo.P1:{
+                selectedPinForServo = AnalogPin.P1
+                break
+            }
+            case AvailablePinsOfServo.P2:{
+                selectedPinForServo = AnalogPin.P2
                 break
             }
         }
@@ -110,7 +123,32 @@ namespace eule {
     }
 
     function setServoAngle(angle?: number){
-        pins.servoWritePin(selectedPinForServo,angle)
+        let angSet: number = angleBefore
+
+        if(angleBefore == -1){
+            angSet = angle
+            angleBefore = angle
+            pins.servoWritePin(selectedPinForServo,angSet)
+            basic.pause(500)
+        }
+
+        if(angSet < angle){
+            while(angSet < angle){
+                angSet += 1
+                pins.servoWritePin(selectedPinForServo,angSet)
+                basic.pause(10)
+            }
+        }else if(angSet > angle){
+            while(angSet > angle){
+                angSet -= 1
+                pins.servoWritePin(selectedPinForServo,angSet)
+                basic.pause(10)
+            }
+        }else{
+            pins.servoWritePin(selectedPinForServo,angSet)
+            basic.pause(10)
+        }
+        angleBefore = angle
     }
 
     function findLocalMax(angleStart?: number){
@@ -122,6 +160,9 @@ namespace eule {
         const xmax: number = 190
         const threshold: number = 20
         let doLoop: boolean = true
+
+        setServoAngle(x) 
+        basic.pause(1000)
 
         while((x < xmax) && doLoop){
             setServoAngle(x)
@@ -153,6 +194,9 @@ namespace eule {
         const threshold: number = 20
         let doLoop: boolean = true
 
+        setServoAngle(x) 
+        basic.pause(1000)
+
         while((x < xmax) && doLoop){
             setServoAngle(x)
             basic.pause(50)
@@ -174,6 +218,8 @@ namespace eule {
 
     /**
      * Kalibriert die Servopositionen, sodass sich die Farbfilter korrekt über dem Sensor befinden.
+     * Während der Kalibration auf konstante Lichtverhältnisse achten. Weisses Licht sollte möglichst gerade auf die Farbfilter treffen.
+     * Die Kalibration mit den aufgesetzten Farbfiltern vornehmen
      */
     //% block="kalibriere Servopositionen"
     //% group="beim Start"
@@ -199,6 +245,26 @@ namespace eule {
         angleYellow = findLocalMax(angle)
         serial.writeValue("kalibrierter Winkel gelb", angleYellow)
         
+    }
+
+    /**
+     * Setzt die Servopositionen manuell, sodass sich die Farbfilter korrekt über dem Sensor befinden.
+     * @param winkelRot Winkel für den roten Farbfilter
+     * @param winkelGruen Winkel für den grünen Farbfilter
+     * @param winkelBlau Winkel für den blauen Farbfilter
+     * @param winkelGelb Winkel für den gelben Farbfilter
+    */
+    //% block="Setze Servopositionen manuell %winkelRot %winkelGruen %winkelBlau %winkelGelb"
+    //% group="beim Start"
+    //% winkelRot.min=0 winkelRot.max=180 winkelRot.defl=0
+    //% winkelGruen.min=0 winkelGruen.max=180 winkelGruen.defl=60
+    //% winkelBlau.min=0 winkelBlau.max=180 winkelBlau.defl=120
+    //% winkelGelb.min=0 winkelGelb.max=180 winkelGelb.defl=180
+    export function setServoPositionsManually(winkelRot?: number, winkelGruen?: number, winkelBlau?: number, winkelGelb?: number): void {
+        angleRed = winkelRot            
+        angleGreen = winkelGruen              
+        angleBlue = winkelBlau     
+        angleYellow = winkelGelb
     }
 
      /**
