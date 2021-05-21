@@ -254,7 +254,7 @@ namespace eule {
      * @param winkelBlau Winkel für den blauen Farbfilter
      * @param winkelGelb Winkel für den gelben Farbfilter
     */
-    //% block="Setze Servopositionen manuell %winkelRot %winkelGruen %winkelBlau %winkelGelb"
+    //% block="Setze Winkel manuell | für Rot auf %winkelRot | für Grün auf %winkelGruen |für Blau auf %winkelBlau | für Gelb auf %winkelGelb"
     //% group="beim Start"
     //% winkelRot.min=0 winkelRot.max=180 winkelRot.defl=0
     //% winkelGruen.min=0 winkelGruen.max=180 winkelGruen.defl=60
